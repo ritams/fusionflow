@@ -158,8 +158,16 @@ export function AuthenticationPage() {
                                 <span className="text-2xl font-bold text-white tracking-tighter leading-none">Showcase</span>
                             </div>
                             <div className="flex -space-x-2 h-7 font-sans">
-                                {[1, 2, 3, 4, 5].map(i => (
-                                    <div key={i} className="w-7 h-7 rounded-full border-2 border-black bg-zinc-800" />
+                                {[
+                                    "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=100&auto=format&fit=crop",
+                                    "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&auto=format&fit=crop",
+                                    "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=100&auto=format&fit=crop",
+                                    "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=100&auto=format&fit=crop",
+                                    "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?q=80&w=100&auto=format&fit=crop"
+                                ].map((url, i) => (
+                                    <div key={i} className="w-7 h-7 rounded-full border-2 border-black bg-zinc-800 overflow-hidden">
+                                        <img src={url} alt={`Member ${i + 1}`} className="w-full h-full object-cover" />
+                                    </div>
                                 ))}
                             </div>
                         </div>
