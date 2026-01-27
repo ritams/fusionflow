@@ -7,6 +7,13 @@ import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePres
 import { ArrowUpRight, ArrowRight, BoxSelect } from "lucide-react"
 import { WavyLine } from "@/components/ui/wavy-line"
 
+const ASSET_PREFIX = process.env.NODE_ENV === 'production' ? '/fusionflow' : ''
+
+const getAssetPath = (path: string) => {
+    if (path.startsWith('http')) return path
+    return `${ASSET_PREFIX}${path}`
+}
+
 export function AuthenticationPage() {
     const [isLoading, setIsLoading] = React.useState(false)
     const [isMobile, setIsMobile] = React.useState(false)
@@ -395,7 +402,7 @@ function ShowcaseMedia({ src, index }: { src: string, index: number }) {
         <div className="w-full h-full relative">
             {/* The Placeholder/Main Image */}
             <img
-                src={posterSrc}
+                src={getAssetPath(posterSrc)}
                 alt={`Showcase ${index}`}
                 className={`w-full h-full object-cover grayscale-[0.1] hover:grayscale-0 transition-opacity duration-700 ${isVideo && isVideoLoaded ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
             />
@@ -404,7 +411,7 @@ function ShowcaseMedia({ src, index }: { src: string, index: number }) {
             {isVideo && (
                 <video
                     ref={videoRef}
-                    src={src}
+                    src={getAssetPath(src)}
                     autoPlay
                     muted
                     loop
