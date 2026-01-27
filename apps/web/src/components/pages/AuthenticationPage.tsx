@@ -3,7 +3,7 @@
 import * as React from "react"
 import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
-import { motion, useScroll, useTransform } from "framer-motion"
+import { motion, useScroll, useTransform, useMotionValue, useSpring, AnimatePresence } from "framer-motion"
 import { ArrowUpRight, ArrowRight, BoxSelect } from "lucide-react"
 import { WavyLine } from "@/components/ui/wavy-line"
 
@@ -11,12 +11,54 @@ export function AuthenticationPage() {
     const [isLoading, setIsLoading] = React.useState(false)
     const [isMobile, setIsMobile] = React.useState(false)
 
+    // Magnetic Button Logic
+    const mouseX = useMotionValue(0)
+    const mouseY = useMotionValue(0)
+    const springConfig = { damping: 15, stiffness: 150, mass: 0.1 }
+    const magX = useSpring(mouseX, springConfig)
+    const magY = useSpring(mouseY, springConfig)
+
+    // Background interaction logic
+    const bgMouseX = useMotionValue(0)
+    const bgMouseY = useMotionValue(0)
+    const bgSpringX = useSpring(bgMouseX, { damping: 50, stiffness: 200 })
+    const bgSpringY = useSpring(bgMouseY, { damping: 50, stiffness: 200 })
+
     React.useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 1024)
         checkMobile()
         window.addEventListener('resize', checkMobile)
-        return () => window.removeEventListener('resize', checkMobile)
-    }, [])
+
+        const handleMouseMove = (e: MouseEvent) => {
+            const { clientX, clientY } = e
+            const x = (clientX / window.innerWidth - 0.5) * 40
+            const y = (clientY / window.innerHeight - 0.5) * 40
+            bgMouseX.set(x)
+            bgMouseY.set(y)
+        }
+
+        if (!isMobile) {
+            window.addEventListener('mousemove', handleMouseMove)
+        }
+
+        return () => {
+            window.removeEventListener('resize', checkMobile)
+            window.removeEventListener('mousemove', handleMouseMove)
+        }
+    }, [isMobile, bgMouseX, bgMouseY])
+
+    const handleMagneticMove = (e: React.MouseEvent<HTMLDivElement>) => {
+        const { clientX, clientY, currentTarget } = e
+        const { left, top, width, height } = currentTarget.getBoundingClientRect()
+        const center = { x: left + width / 2, y: top + height / 2 }
+        mouseX.set(clientX - center.x)
+        mouseY.set(clientY - center.y)
+    }
+
+    const resetMagnetic = () => {
+        mouseX.set(0)
+        mouseY.set(0)
+    }
 
     const handleLogin = async () => {
         setIsLoading(true)
@@ -41,7 +83,10 @@ export function AuthenticationPage() {
     }
 
     return (
-        <div className="min-h-screen lg:h-screen bg-white text-black flex flex-col font-sans selection:bg-[#3b82f6] selection:text-white lg:overflow-hidden">
+        <div className="min-h-screen lg:h-screen bg-white text-black flex flex-col font-sans selection:bg-[#3b82f6] selection:text-white lg:overflow-hidden relative">
+
+            {/* Grain Overlay */}
+            <div className="fixed inset-0 z-[100] pointer-events-none opacity-[0.03] grayscale bg-[url('https://grainy-gradients.vercel.app/noise.svg')] mix-blend-multiply" />
 
             {/* Navigation */}
             <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 lg:px-12 lg:py-8 pointer-events-none transition-all duration-300 ${isMobile
@@ -55,7 +100,7 @@ export function AuthenticationPage() {
 
                 <div className="pointer-events-auto">
                     <Button
-                        className="rounded-lg bg-[#3b82f6] text-white hover:bg-[#2563eb] text-[10px] lg:text-xs font-medium px-3 lg:px-4 h-7 lg:h-8 transition-all cursor-pointer shadow-sm"
+                        className="rounded-lg bg-[#3b82f6] text-white hover:bg-[#2563eb] text-xs lg:text-xs font-medium px-4 lg:px-4 h-9 lg:h-8 transition-all cursor-pointer shadow-sm"
                         onClick={handleLogin}
                     >
                         Log in
@@ -67,7 +112,10 @@ export function AuthenticationPage() {
             <main className="flex-1 w-full grid grid-cols-12 gap-x-0 lg:gap-x-4 relative max-w-full lg:max-w-[95vw] mx-auto lg:overflow-hidden">
 
                 {/* Dynamic Background Grid - Dedicated Fixed Container */}
-                <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+                <motion.div
+                    style={{ x: bgSpringX, y: bgSpringY }}
+                    className="fixed inset-0 z-0 pointer-events-none overflow-hidden scale-110"
+                >
                     {/* Horizontal Grid Lines - 6 Equispaced Lines (0-110vh) - HIDDEN ON MOBILE */}
                     <div className="hidden lg:block">
                         <div className="absolute top-[0vh] left-0 right-0">
@@ -105,21 +153,46 @@ export function AuthenticationPage() {
                             </div>
                         ))}
                     </div>
-                </div>
+                </motion.div>
 
                 {/* Left Column - Hero Type */}
                 <div className="col-span-12 lg:col-span-8 flex flex-col justify-center px-6 lg:pl-12 py-20 lg:py-32 relative z-20 lg:overflow-y-auto scrollbar-hide h-[100svh] lg:h-full">
-                    <motion.div variants={container} initial="hidden" animate="show" className="space-y-12">
+                    <motion.div variants={container} initial="hidden" animate="show" className="space-y-8 lg:space-y-10">
 
-                        {/* Headline */}
-                        <div className="overflow-visible">
-                            <motion.h1 variants={item} className="text-[21vw] lg:text-[8vw] leading-[0.85] lg:leading-[0.95] font-bold lg:tracking-tight tracking-tighter text-black">
-                                Where ideas <br />
-                                find their <span className="relative inline-block px-4 ml-2 -rotate-2 bg-[#3b82f6] text-white transform origin-center shadow-[0_4px_20px_-5px_rgba(59,130,246,0.4)]">flow</span>.
+                        <div className="overflow-visible min-h-[300px] flex flex-col justify-center">
+                            <motion.h1
+                                variants={container}
+                                initial="hidden"
+                                animate="show"
+                                className="text-[16vw] md:text-[12vw] lg:text-[8vw] leading-[0.9] lg:leading-[0.95] font-bold lg:tracking-tight tracking-tighter text-black"
+                            >
+                                {["Where", "ideas"].map((word, i) => (
+                                    <motion.span
+                                        key={i}
+                                        variants={item}
+                                        className="inline-block mr-[0.2em]"
+                                    >
+                                        {word}
+                                    </motion.span>
+                                ))}
+                                <br />
+                                <motion.span variants={item} className="inline-block mr-[0.2em]">find</motion.span>
+                                <motion.span variants={item} className="inline-block mr-[0.2em]">their</motion.span>
+                                <motion.span
+                                    variants={item}
+                                    className="relative inline-flex items-end mt-2 md:mt-4 lg:mt-0 whitespace-nowrap"
+                                >
+                                    <span
+                                        className="relative inline-block px-4 -rotate-2 bg-[#3b82f6] text-white shadow-[0_10px_30px_-5px_rgba(59,130,246,0.4)] transform origin-center text-[22vw] md:text-[16vw] lg:text-[8vw]"
+                                    >
+                                        flow
+                                    </span>
+                                    <span className="text-[10vw] md:text-[8vw] lg:text-[4vw] font-bold">.</span>
+                                </motion.span>
                             </motion.h1>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start pt-8 lg:pt-16">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start pt-4 lg:pt-8">
                             <div className="overflow-hidden">
                                 <motion.p variants={item} className="text-xl text-zinc-500 font-light leading-relaxed tracking-tight">
                                     A workspace designed for your creative rhythm. Storyboard, synthesize, and deploy without the friction.
@@ -127,20 +200,26 @@ export function AuthenticationPage() {
                             </div>
 
                             <motion.div variants={item} className="flex flex-col items-start gap-4">
-                                <Button
-                                    className="relative h-16 px-8 rounded-xl bg-transparent border-2 border-[#3b82f6] text-[#3b82f6] overflow-hidden group hover:shadow-[0_20px_50px_-12px_rgba(59,130,246,0.3)] transition-all duration-300 active:scale-95 cursor-pointer"
-                                    onClick={handleLogin}
+                                <motion.div
+                                    style={{ x: magX, y: magY }}
+                                    onMouseMove={handleMagneticMove}
+                                    onMouseLeave={resetMagnetic}
+                                    className="relative"
                                 >
-                                    {/* The Curtain (Fill Effect) */}
-                                    <div className="absolute inset-0 bg-[#3b82f6] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[0.23,1,0.32,1]" />
+                                    <Button
+                                        className="relative h-16 px-8 rounded-xl bg-transparent border-2 border-[#3b82f6] text-[#3b82f6] overflow-hidden group hover:shadow-[0_20px_50px_-12px_rgba(59,130,246,0.3)] transition-all duration-300 active:scale-95 cursor-pointer"
+                                        onClick={handleLogin}
+                                    >
+                                        {/* The Curtain (Fill Effect) */}
+                                        <div className="absolute inset-0 bg-[#3b82f6] translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-[0.23,1,0.32,1]" />
 
-                                    {/* Content */}
-                                    <div className="relative z-10 flex items-center gap-4 group-hover:text-white transition-colors duration-300">
-                                        <span className="text-xl font-bold tracking-tight">Start Creating</span>
-                                        <ArrowRight className="w-5 h-5 group-hover:-rotate-45 transition-transform duration-300" />
-                                    </div>
-                                </Button>
-
+                                        {/* Content */}
+                                        <div className="relative z-10 flex items-center gap-4 group-hover:text-white transition-colors duration-300">
+                                            <span className="text-xl font-bold tracking-tight">Start Creating</span>
+                                            <ArrowRight className="w-5 h-5 group-hover:-rotate-45 transition-transform duration-300" />
+                                        </div>
+                                    </Button>
+                                </motion.div>
                             </motion.div>
                         </div>
 
@@ -155,12 +234,19 @@ export function AuthenticationPage() {
                         <div className="flex justify-center lg:flex">
                             {!isMobile && (
                                 <motion.div
-                                    animate={{ y: [0, 8, 0] }}
-                                    transition={{ duration: 2, repeat: Infinity }}
-                                    className="flex flex-col items-center gap-1 opacity-60"
+                                    animate={{
+                                        y: [0, 8, 0],
+                                        opacity: [0.4, 0.8, 0.4]
+                                    }}
+                                    transition={{
+                                        duration: 2.5,
+                                        repeat: Infinity,
+                                        ease: "easeInOut"
+                                    }}
+                                    className="flex flex-col items-center gap-1"
                                 >
-                                    <span className="text-[9px] uppercase tracking-[0.4em] text-white font-medium">Scroll to explore</span>
-                                    <div className="w-[1px] h-10 bg-gradient-to-b from-white to-transparent" />
+                                    <span className="text-[10px] uppercase tracking-[0.5em] text-white/70 font-medium">Explore Community</span>
+                                    <div className="w-[1px] h-12 bg-gradient-to-b from-white/80 via-white/20 to-transparent shadow-[0_0_10px_rgba(255,255,255,0.3)]" />
                                 </motion.div>
                             )}
                         </div>
@@ -256,19 +342,33 @@ function InfiniteShowcase({ isMobile }: { isMobile: boolean }) {
                 {/* Column 1 */}
                 <div className="flex-1 flex flex-col">
                     {col1.map((item, i) => (
-                        <div key={`col1-${i}`} className={`w-full relative overflow-hidden ${item.aspect}`}>
+                        <motion.div
+                            key={`col1-${i}`}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.8, delay: (i % 5) * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                            className={`w-full relative overflow-hidden ${item.aspect}`}
+                        >
                             <ShowcaseMedia src={item.src} index={i} />
                             <div className="absolute inset-0 border-[0.5px] border-white/10 pointer-events-none" />
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
                 {/* Column 2 */}
                 <div className="flex-1 flex flex-col">
                     {col2.map((item, i) => (
-                        <div key={`col2-${i}`} className={`w-full relative overflow-hidden ${item.aspect}`}>
+                        <motion.div
+                            key={`col2-${i}`}
+                            initial={{ opacity: 0, y: 20 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true }}
+                            transition={{ duration: 0.8, delay: (i % 5) * 0.1 + 0.2, ease: [0.16, 1, 0.3, 1] }}
+                            className={`w-full relative overflow-hidden ${item.aspect}`}
+                        >
                             <ShowcaseMedia src={item.src} index={i} />
                             <div className="absolute inset-0 border-[0.5px] border-white/10 pointer-events-none" />
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
             </div>
