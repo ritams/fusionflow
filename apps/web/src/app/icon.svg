@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="120" fill="#171717" />
+  
+  <!-- Wave 1: Subtle background wave -->
+  <path d="M120 -50 C 40 150, 180 350, 100 562" fill="none" stroke="white" stroke-width="20" stroke-opacity="0.5" stroke-linecap="round" />
+  
+  <!-- Wave 2: Main strong wave -->
+  <path d="M220 -50 C 150 150, 290 350, 210 562" fill="none" stroke="white" stroke-width="36" stroke-linecap="round" />
+  
+  <!-- Wave 3: Intersecting flow -->
+  <path d="M320 -50 C 260 180, 420 320, 290 562" fill="none" stroke="white" stroke-width="28" stroke-linecap="round" />
+  
+  <!-- Wave 4: Edge detail -->
+  <path d="M420 -50 C 380 200, 460 400, 390 562" fill="none" stroke="white" stroke-width="20" stroke-opacity="0.7" stroke-linecap="round" />
+</svg>
