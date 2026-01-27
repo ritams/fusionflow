@@ -195,7 +195,7 @@ export function AuthenticationPage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start pt-4 lg:pt-8">
                             <div className="overflow-hidden">
                                 <motion.p variants={item} className="text-xl text-zinc-500 font-light leading-relaxed tracking-tight">
-                                    A workspace designed for your creative rhythm. Storyboard, synthesize, and deploy without the friction.
+                                    A space designed for your creative rhythm. Storyboard, synthesize, and export without the friction.
                                 </motion.p>
                             </div>
 
