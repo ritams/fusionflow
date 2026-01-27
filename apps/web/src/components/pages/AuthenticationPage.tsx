@@ -44,8 +44,7 @@ export function AuthenticationPage() {
 
                 <div className="pointer-events-auto">
                     <Button
-                        variant="ghost"
-                        className="rounded-lg text-white hover:bg-white/5 text-sm font-bold px-6 h-10 border border-white/10 hover:border-[#3b82f6]/50 hover:text-[#3b82f6] transition-all backdrop-blur-[2px] cursor-pointer"
+                        className="rounded-lg bg-[#3b82f6] text-white hover:bg-[#2563eb] text-xs font-medium px-4 h-8 transition-all cursor-pointer shadow-sm"
                         onClick={handleLogin}
                     >
                         Log in
@@ -131,44 +130,11 @@ export function AuthenticationPage() {
                 </div>
 
                 {/* Right Column - Community Showcase */}
-                <div className="col-span-12 lg:col-span-4 border-t lg:border-t-0 lg:border-l border-zinc-200 flex flex-col relative h-screen bg-black overflow-hidden group/showcase text-white">
+                <div className="col-span-12 lg:col-span-4 border-t lg:border-t-0 lg:border-l border-zinc-200/60 flex flex-col relative h-screen bg-black overflow-hidden group/showcase text-white">
 
-                    {/* Seamless Tiled Grid */}
-                    <div className="flex-1 overflow-y-auto scrollbar-hide">
-                        <div className="columns-2 gap-0">
-                            {[
-                                { src: "/showcase/art5.png", aspect: "aspect-[3/4]" },
-                                { src: "/showcase/art6.png", aspect: "aspect-square" },
-                                { src: "/showcase/art8.png", aspect: "aspect-[4/5]" },
-                                { src: "/showcase/art7.png", aspect: "aspect-[2/3]" },
-                                { src: "/showcase/art9.mp4", aspect: "aspect-square" },
-                                { src: "/showcase/art10.png", aspect: "aspect-[3/4]" },
-                                { src: "/showcase/art2.png", aspect: "aspect-[4/5]" },
-                                { src: "/showcase/art3.png", aspect: "aspect-[3/2]" },
-                                { src: "/showcase/art4.png", aspect: "aspect-video" }
-                            ].map((item, i) => (
-                                <div key={i} className={`w-full relative overflow-hidden ${item.aspect}`}>
-                                    {item.src.endsWith('.mp4') ? (
-                                        <video
-                                            src={item.src}
-                                            autoPlay
-                                            muted
-                                            loop
-                                            playsInline
-                                            className="w-full h-full object-cover grayscale-[0.1] hover:grayscale-0 transition-all duration-1000"
-                                        />
-                                    ) : (
-                                        <img
-                                            src={item.src}
-                                            alt={`Showcase ${i}`}
-                                            className="w-full h-full object-cover grayscale-[0.1] hover:grayscale-0 transition-all duration-1000"
-                                        />
-                                    )}
-                                    <div className="absolute inset-0 border-[0.5px] border-white/10" />
-                                </div>
-                            ))}
-                        </div>
-                    </div>
+                    <InfiniteShowcase />
+
+                    {/* Gradient Overlay for Scroll Hint */}
 
                     {/* Gradient Overlay for Scroll Hint */}
                     <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none" />
@@ -201,6 +167,124 @@ export function AuthenticationPage() {
                 </div>
 
             </main>
+        </div>
+    )
+}
+
+const SHOWCASE_ITEMS = [
+    { src: "/showcase/art5.png", aspect: "aspect-[3/4]" },
+    { src: "/showcase/art10.mp4", aspect: "aspect-[3/4]" },
+    { src: "/showcase/art6.png", aspect: "aspect-square" },
+    { src: "/showcase/art7.png", aspect: "aspect-[2/3]" },
+    { src: "/showcase/art9.mp4", aspect: "aspect-square" },
+    { src: "/showcase/art8.png", aspect: "aspect-[4/5]" },
+    { src: "/showcase/art2.png", aspect: "aspect-[4/5]" },
+    { src: "/showcase/art3.png", aspect: "aspect-[3/2]" },
+    { src: "/showcase/art4.png", aspect: "aspect-video" }
+]
+
+function InfiniteShowcase() {
+    const scrollRef = React.useRef<HTMLDivElement>(null)
+    const contentRef = React.useRef<HTMLDivElement>(null)
+    const [isInitialized, setIsInitialized] = React.useState(false)
+
+    // Triplicate the items to ensure seamless loop
+    const tripleItems = [...SHOWCASE_ITEMS, ...SHOWCASE_ITEMS, ...SHOWCASE_ITEMS]
+
+    // Split into two columns for true masonry-flex layout
+    const col1 = tripleItems.filter((_, i) => i % 2 === 0)
+    const col2 = tripleItems.filter((_, i) => i % 2 !== 0)
+
+    React.useEffect(() => {
+        if (scrollRef.current && contentRef.current) {
+            // Start in the middle of the triple list
+            const singleHeight = contentRef.current.scrollHeight / 3
+            scrollRef.current.scrollTop = singleHeight
+            setIsInitialized(true)
+        }
+    }, [])
+
+    const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+        if (!isInitialized || !contentRef.current) return
+
+        const container = e.currentTarget
+        const singleHeight = contentRef.current.scrollHeight / 3
+
+        if (container.scrollTop >= singleHeight * 2) {
+            // When reaching the end of the 2nd set, snap back to the start of the 2nd set
+            container.scrollTop = container.scrollTop - singleHeight
+        } else if (container.scrollTop <= singleHeight * 0.5) {
+            // When reaching the start of the 2nd set, snap to the end of the 2nd set
+            container.scrollTop = container.scrollTop + singleHeight
+        }
+    }
+
+    return (
+        <div
+            ref={scrollRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto scrollbar-hide active:cursor-grabbing"
+        >
+            <div ref={contentRef} className="flex gap-0">
+                <div className="flex-1 flex flex-col">
+                    {col1.map((item, i) => (
+                        <div key={`col1-${i}`} className={`w-full relative overflow-hidden ${item.aspect}`}>
+                            <ShowcaseMedia src={item.src} index={i} />
+                            <div className="absolute inset-0 border-[0.5px] border-white/10 pointer-events-none" />
+                        </div>
+                    ))}
+                </div>
+                <div className="flex-1 flex flex-col">
+                    {col2.map((item, i) => (
+                        <div key={`col2-${i}`} className={`w-full relative overflow-hidden ${item.aspect}`}>
+                            <ShowcaseMedia src={item.src} index={i} />
+                            <div className="absolute inset-0 border-[0.5px] border-white/10 pointer-events-none" />
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </div>
+    )
+}
+
+function ShowcaseMedia({ src, index }: { src: string, index: number }) {
+    const isVideo = src.endsWith('.mp4')
+    const [isVideoLoaded, setIsVideoLoaded] = React.useState(false)
+    const videoRef = React.useRef<HTMLVideoElement>(null)
+
+    // Attempt to get corresponding image for video poster
+    const posterSrc = isVideo ? src.replace('.mp4', '.png') : src
+
+    // Local/cached files can be ready before the first render or event fires
+    React.useEffect(() => {
+        if (isVideo && videoRef.current && videoRef.current.readyState >= 3) {
+            setIsVideoLoaded(true)
+        }
+    }, [isVideo])
+
+    return (
+        <div className="w-full h-full relative">
+            {/* The Placeholder/Main Image */}
+            <img
+                src={posterSrc}
+                alt={`Showcase ${index}`}
+                className={`w-full h-full object-cover grayscale-[0.1] hover:grayscale-0 transition-opacity duration-700 ${isVideo && isVideoLoaded ? 'opacity-0 scale-105' : 'opacity-100 scale-100'}`}
+            />
+
+            {/* The Video Layer */}
+            {isVideo && (
+                <video
+                    ref={videoRef}
+                    src={src}
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    onLoadedData={() => setIsVideoLoaded(true)}
+                    onCanPlay={() => setIsVideoLoaded(true)}
+                    className={`absolute inset-0 w-full h-full object-cover grayscale-[0.1] hover:grayscale-0 transition-opacity duration-700 ${isVideoLoaded ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+                />
+            )}
         </div>
     )
 }
