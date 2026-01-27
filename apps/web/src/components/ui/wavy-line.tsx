@@ -7,12 +7,14 @@ interface WavyLineProps {
     index?: number
     total?: number
     orientation?: 'vertical' | 'horizontal'
+    progression?: 'index' | 'position'
 }
 
 export function WavyLine({
     index = 0,
     total = 12,
-    orientation = 'vertical'
+    orientation = 'vertical',
+    progression
 }: WavyLineProps) {
     const [isMounted, setIsMounted] = useState(false)
 
@@ -54,24 +56,33 @@ export function WavyLine({
             const height = 2000
             const segments = 200 // More anchor points for vertical
             const step = height / segments
-            const progress = index / (total - 1)
-
-            let lineIntensity = 0
-            const threshold = 0.1
-            if (progress < threshold) {
-                lineIntensity = 0
-            } else {
-                const t = (progress - threshold) / (1 - threshold)
-                lineIntensity = t * t
-            }
-
-            if (lineIntensity <= 0.01) {
-                return `M 0 0 L 0 ${height}`
-            }
+            const effectiveProgression = progression || 'index'
 
             const points = []
             for (let i = 0; i <= segments; i++) {
                 const y = i * step
+
+                let progress = 0
+                if (effectiveProgression === 'index') {
+                    progress = index / (total - 1)
+                } else {
+                    progress = Math.min(1, y / 1600)
+                }
+
+                let lineIntensity = 0
+                const threshold = 0.1
+                if (progress < threshold) {
+                    lineIntensity = 0
+                } else {
+                    const t = (progress - threshold) / (1 - threshold)
+                    lineIntensity = t * t
+                }
+
+                if (lineIntensity <= 0.01) {
+                    points.push({ x: 0, y })
+                    continue
+                }
+
                 let x = Math.sin((y * 0.003) + (index * 0.5)) * (lineIntensity * 80)
                 x += fluidNoise(y, lineIntensity * 2.5)
                 if (lineIntensity > 0.8) {
@@ -90,7 +101,14 @@ export function WavyLine({
             const points = []
             for (let i = 0; i <= segments; i++) {
                 const x = i * step
-                const progress = Math.min(1, x / 1600)
+                const effectiveProgression = progression || 'position'
+
+                let progress = 0
+                if (effectiveProgression === 'position') {
+                    progress = Math.min(1, x / 1600)
+                } else {
+                    progress = index / (total - 1)
+                }
 
                 let pointIntensity = 0
                 const threshold = 0.05

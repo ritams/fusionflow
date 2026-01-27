@@ -9,6 +9,14 @@ import { WavyLine } from "@/components/ui/wavy-line"
 
 export function AuthenticationPage() {
     const [isLoading, setIsLoading] = React.useState(false)
+    const [isMobile, setIsMobile] = React.useState(false)
+
+    React.useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 1024)
+        checkMobile()
+        window.addEventListener('resize', checkMobile)
+        return () => window.removeEventListener('resize', checkMobile)
+    }, [])
 
     const handleLogin = async () => {
         setIsLoading(true)
@@ -33,10 +41,13 @@ export function AuthenticationPage() {
     }
 
     return (
-        <div className="h-screen bg-white text-black flex flex-col font-sans selection:bg-[#3b82f6] selection:text-white overflow-hidden">
+        <div className="min-h-screen lg:h-screen bg-white text-black flex flex-col font-sans selection:bg-[#3b82f6] selection:text-white lg:overflow-hidden">
 
             {/* Navigation */}
-            <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-8 py-6 pointer-events-none">
+            <nav className={`fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-6 py-4 lg:px-12 lg:py-8 pointer-events-none transition-all duration-300 ${isMobile
+                ? "bg-white/80 backdrop-blur-md border-b border-zinc-200/60"
+                : "bg-transparent backdrop-blur-none border-none shadow-none"
+                }`}>
                 <div className="flex items-center gap-2 text-sm font-black tracking-tighter pointer-events-auto text-black">
                     <div className="w-1.5 h-1.5 rounded-full bg-[#3b82f6]" />
                     <span>FusionFlow</span>
@@ -44,7 +55,7 @@ export function AuthenticationPage() {
 
                 <div className="pointer-events-auto">
                     <Button
-                        className="rounded-lg bg-[#3b82f6] text-white hover:bg-[#2563eb] text-xs font-medium px-4 h-8 transition-all cursor-pointer shadow-sm"
+                        className="rounded-lg bg-[#3b82f6] text-white hover:bg-[#2563eb] text-[10px] lg:text-xs font-medium px-3 lg:px-4 h-7 lg:h-8 transition-all cursor-pointer shadow-sm"
                         onClick={handleLogin}
                     >
                         Log in
@@ -53,28 +64,30 @@ export function AuthenticationPage() {
             </nav>
 
             {/* Main Layout Container */}
-            <main className="flex-1 w-full grid grid-cols-12 gap-x-4 relative max-w-[95vw] mx-auto overflow-hidden">
+            <main className="flex-1 w-full grid grid-cols-12 gap-x-0 lg:gap-x-4 relative max-w-full lg:max-w-[95vw] mx-auto lg:overflow-hidden">
 
                 {/* Dynamic Background Grid - Dedicated Fixed Container */}
                 <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-                    {/* Horizontal Grid Lines - 6 Equispaced Lines (0-110vh) */}
-                    <div className="absolute top-[0vh] left-0 right-0">
-                        <WavyLine orientation="horizontal" />
-                    </div>
-                    <div className="absolute top-[22vh] left-0 right-0">
-                        <WavyLine orientation="horizontal" />
-                    </div>
-                    <div className="absolute top-[44vh] left-0 right-0">
-                        <WavyLine orientation="horizontal" />
-                    </div>
-                    <div className="absolute top-[66vh] left-0 right-0">
-                        <WavyLine orientation="horizontal" />
-                    </div>
-                    <div className="absolute top-[88vh] left-0 right-0">
-                        <WavyLine orientation="horizontal" />
-                    </div>
-                    <div className="absolute top-[110vh] left-0 right-0">
-                        <WavyLine orientation="horizontal" />
+                    {/* Horizontal Grid Lines - 6 Equispaced Lines (0-110vh) - HIDDEN ON MOBILE */}
+                    <div className="hidden lg:block">
+                        <div className="absolute top-[0vh] left-0 right-0">
+                            <WavyLine orientation="horizontal" />
+                        </div>
+                        <div className="absolute top-[22vh] left-0 right-0">
+                            <WavyLine orientation="horizontal" />
+                        </div>
+                        <div className="absolute top-[44vh] left-0 right-0">
+                            <WavyLine orientation="horizontal" />
+                        </div>
+                        <div className="absolute top-[66vh] left-0 right-0">
+                            <WavyLine orientation="horizontal" />
+                        </div>
+                        <div className="absolute top-[88vh] left-0 right-0">
+                            <WavyLine orientation="horizontal" />
+                        </div>
+                        <div className="absolute top-[110vh] left-0 right-0">
+                            <WavyLine orientation="horizontal" />
+                        </div>
                     </div>
 
                     {/* Vertical Wavy Lines - Within Fixed Viewport Constraint */}
@@ -82,7 +95,12 @@ export function AuthenticationPage() {
                         {[...Array(12)].map((_, i) => (
                             <div key={i} className={`col-span-1 h-full relative ${i > 1 && i < 10 ? 'hidden md:block' : ''}`}>
                                 {i < 11 && (
-                                    <WavyLine index={i} total={12} orientation="vertical" />
+                                    <WavyLine
+                                        index={i}
+                                        total={12}
+                                        orientation="vertical"
+                                        progression={isMobile ? "position" : "index"}
+                                    />
                                 )}
                             </div>
                         ))}
@@ -90,18 +108,18 @@ export function AuthenticationPage() {
                 </div>
 
                 {/* Left Column - Hero Type */}
-                <div className="col-span-12 lg:col-span-8 flex flex-col justify-center px-4 md:pl-12 py-32 relative z-20 overflow-y-auto scrollbar-hide h-full">
+                <div className="col-span-12 lg:col-span-8 flex flex-col justify-center px-6 lg:pl-12 py-20 lg:py-32 relative z-20 lg:overflow-y-auto scrollbar-hide h-[100svh] lg:h-full">
                     <motion.div variants={container} initial="hidden" animate="show" className="space-y-12">
 
                         {/* Headline */}
                         <div className="overflow-visible">
-                            <motion.h1 variants={item} className="text-[10vw] lg:text-[8vw] leading-[0.95] font-bold tracking-tight text-black">
+                            <motion.h1 variants={item} className="text-[21vw] lg:text-[8vw] leading-[0.85] lg:leading-[0.95] font-bold lg:tracking-tight tracking-tighter text-black">
                                 Where ideas <br />
                                 find their <span className="relative inline-block px-4 ml-2 -rotate-2 bg-[#3b82f6] text-white transform origin-center shadow-[0_4px_20px_-5px_rgba(59,130,246,0.4)]">flow</span>.
                             </motion.h1>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start pt-16">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12 items-start pt-8 lg:pt-16">
                             <div className="overflow-hidden">
                                 <motion.p variants={item} className="text-xl text-zinc-500 font-light leading-relaxed tracking-tight">
                                     A workspace designed for your creative rhythm. Storyboard, synthesize, and deploy without the friction.
@@ -130,26 +148,21 @@ export function AuthenticationPage() {
                 </div>
 
                 {/* Right Column - Community Showcase */}
-                <div className="col-span-12 lg:col-span-4 border-t lg:border-t-0 lg:border-l border-zinc-200/60 flex flex-col relative h-screen bg-black overflow-hidden group/showcase text-white">
+                <div className="col-span-12 lg:col-span-4 lg:border-l border-zinc-200/60 flex flex-col relative h-auto lg:h-screen bg-black overflow-visible lg:overflow-hidden group/showcase text-white">
 
-                    <InfiniteShowcase />
-
-                    {/* Gradient Overlay for Scroll Hint */}
-
-                    {/* Gradient Overlay for Scroll Hint */}
-                    <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none" />
-
-                    {/* Bottom Label & Scroll Hint */}
-                    <div className="absolute bottom-0 left-0 right-0 p-8 flex flex-col gap-6 z-30">
-                        <div className="flex justify-center">
-                            <motion.div
-                                animate={{ y: [0, 8, 0] }}
-                                transition={{ duration: 2, repeat: Infinity }}
-                                className="flex flex-col items-center gap-1 opacity-60"
-                            >
-                                <span className="text-[9px] uppercase tracking-[0.4em] text-white font-medium">Scroll to explore</span>
-                                <div className="w-[1px] h-10 bg-gradient-to-b from-white to-transparent" />
-                            </motion.div>
+                    {/* Label at Top on Mobile, Bottom on Desktop */}
+                    <div className={`${isMobile ? 'relative p-8 border-b border-white/10' : 'absolute bottom-0 left-0 right-0 p-8 flex flex-col gap-6 z-30'}`}>
+                        <div className="flex justify-center lg:flex">
+                            {!isMobile && (
+                                <motion.div
+                                    animate={{ y: [0, 8, 0] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                    className="flex flex-col items-center gap-1 opacity-60"
+                                >
+                                    <span className="text-[9px] uppercase tracking-[0.4em] text-white font-medium">Scroll to explore</span>
+                                    <div className="w-[1px] h-10 bg-gradient-to-b from-white to-transparent" />
+                                </motion.div>
+                            )}
                         </div>
 
                         <div className="flex justify-between items-end">
@@ -172,6 +185,13 @@ export function AuthenticationPage() {
                             </div>
                         </div>
                     </div>
+
+                    <InfiniteShowcase isMobile={isMobile} />
+
+                    {/* Gradient Overlay for Scroll Hint - Only on Desktop */}
+                    {!isMobile && (
+                        <div className="absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black via-black/80 to-transparent z-20 pointer-events-none" />
+                    )}
                 </div>
 
             </main>
@@ -191,29 +211,28 @@ const SHOWCASE_ITEMS = [
     { src: "/showcase/art4.png", aspect: "aspect-video" }
 ]
 
-function InfiniteShowcase() {
+function InfiniteShowcase({ isMobile }: { isMobile: boolean }) {
     const scrollRef = React.useRef<HTMLDivElement>(null)
     const contentRef = React.useRef<HTMLDivElement>(null)
     const [isInitialized, setIsInitialized] = React.useState(false)
 
-    // Triplicate the items to ensure seamless loop
-    const tripleItems = [...SHOWCASE_ITEMS, ...SHOWCASE_ITEMS, ...SHOWCASE_ITEMS]
+    // Only triplicate if not mobile
+    const displayItems = isMobile ? SHOWCASE_ITEMS : [...SHOWCASE_ITEMS, ...SHOWCASE_ITEMS, ...SHOWCASE_ITEMS]
 
-    // Split into two columns for true masonry-flex layout
-    const col1 = tripleItems.filter((_, i) => i % 2 === 0)
-    const col2 = tripleItems.filter((_, i) => i % 2 !== 0)
+    const col1 = displayItems.filter((_, i) => i % 2 === 0)
+    const col2 = displayItems.filter((_, i) => i % 2 !== 0)
 
     React.useEffect(() => {
-        if (scrollRef.current && contentRef.current) {
+        if (!isMobile && scrollRef.current && contentRef.current) {
             // Start in the middle of the triple list
             const singleHeight = contentRef.current.scrollHeight / 3
             scrollRef.current.scrollTop = singleHeight
             setIsInitialized(true)
         }
-    }, [])
+    }, [isMobile])
 
     const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
-        if (!isInitialized || !contentRef.current) return
+        if (isMobile || !isInitialized || !contentRef.current) return
 
         const container = e.currentTarget
         const singleHeight = contentRef.current.scrollHeight / 3
@@ -231,9 +250,10 @@ function InfiniteShowcase() {
         <div
             ref={scrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto scrollbar-hide active:cursor-grabbing"
+            className="flex-1 lg:overflow-y-auto scrollbar-hide active:cursor-grabbing"
         >
             <div ref={contentRef} className="flex gap-0">
+                {/* Column 1 */}
                 <div className="flex-1 flex flex-col">
                     {col1.map((item, i) => (
                         <div key={`col1-${i}`} className={`w-full relative overflow-hidden ${item.aspect}`}>
@@ -242,6 +262,7 @@ function InfiniteShowcase() {
                         </div>
                     ))}
                 </div>
+                {/* Column 2 */}
                 <div className="flex-1 flex flex-col">
                     {col2.map((item, i) => (
                         <div key={`col2-${i}`} className={`w-full relative overflow-hidden ${item.aspect}`}>
