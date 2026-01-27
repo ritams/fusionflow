@@ -5,6 +5,7 @@ import { signIn } from "next-auth/react"
 import { Button } from "@/components/ui/button"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { ArrowUpRight, ArrowRight, BoxSelect } from "lucide-react"
+import { WavyLine } from "@/components/ui/wavy-line"
 
 export function AuthenticationPage() {
     const [isLoading, setIsLoading] = React.useState(false)
@@ -32,7 +33,7 @@ export function AuthenticationPage() {
     }
 
     return (
-        <div className="min-h-screen bg-white text-black flex flex-col font-sans selection:bg-[#3b82f6] selection:text-white">
+        <div className="h-screen bg-white text-black flex flex-col font-sans selection:bg-[#3b82f6] selection:text-white overflow-hidden">
 
             {/* Navigation */}
             <nav className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-8 py-6 pointer-events-none">
@@ -52,26 +53,45 @@ export function AuthenticationPage() {
                 </div>
             </nav>
 
-            {/* Main Grid Layout */}
-            <main className="flex-1 w-full grid grid-cols-12 gap-x-4 relative z-10 border-l border-r border-zinc-200 max-w-[95vw] mx-auto min-h-screen">
+            {/* Main Layout Container */}
+            <main className="flex-1 w-full grid grid-cols-12 gap-x-4 relative max-w-[95vw] mx-auto overflow-hidden">
 
-                {/* Vertical Lines - kept subtle */}
-                <div className="absolute inset-0 grid grid-cols-12 gap-x-4 pointer-events-none">
-                    <div className="col-span-1 border-r border-zinc-100 h-full" />
-                    <div className="col-span-1 border-r border-zinc-100 h-full" />
-                    <div className="col-span-1 border-r border-zinc-100 h-full hidden md:block" />
-                    <div className="col-span-1 border-r border-zinc-100 h-full hidden md:block" />
-                    <div className="col-span-1 border-r border-zinc-100 h-full hidden md:block" />
-                    <div className="col-span-1 border-r border-zinc-100 h-full hidden md:block" />
-                    <div className="col-span-1 border-r border-zinc-100 h-full hidden md:block" />
-                    <div className="col-span-1 border-r border-zinc-100 h-full hidden md:block" />
-                    <div className="col-span-1 border-r border-zinc-100 h-full hidden md:block" />
-                    <div className="col-span-1 border-r border-zinc-100 h-full hidden md:block" />
-                    <div className="col-span-1 border-r border-zinc-100 h-full" />
+                {/* Dynamic Background Grid - Dedicated Fixed Container */}
+                <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+                    {/* Horizontal Grid Lines - 6 Equispaced Lines (0-110vh) */}
+                    <div className="absolute top-[0vh] left-0 right-0">
+                        <WavyLine orientation="horizontal" />
+                    </div>
+                    <div className="absolute top-[22vh] left-0 right-0">
+                        <WavyLine orientation="horizontal" />
+                    </div>
+                    <div className="absolute top-[44vh] left-0 right-0">
+                        <WavyLine orientation="horizontal" />
+                    </div>
+                    <div className="absolute top-[66vh] left-0 right-0">
+                        <WavyLine orientation="horizontal" />
+                    </div>
+                    <div className="absolute top-[88vh] left-0 right-0">
+                        <WavyLine orientation="horizontal" />
+                    </div>
+                    <div className="absolute top-[110vh] left-0 right-0">
+                        <WavyLine orientation="horizontal" />
+                    </div>
+
+                    {/* Vertical Wavy Lines - Within Fixed Viewport Constraint */}
+                    <div className="absolute inset-0 max-w-[95vw] mx-auto grid grid-cols-12 gap-x-4">
+                        {[...Array(12)].map((_, i) => (
+                            <div key={i} className={`col-span-1 h-full relative ${i > 1 && i < 10 ? 'hidden md:block' : ''}`}>
+                                {i < 11 && (
+                                    <WavyLine index={i} total={12} orientation="vertical" />
+                                )}
+                            </div>
+                        ))}
+                    </div>
                 </div>
 
                 {/* Left Column - Hero Type */}
-                <div className="col-span-12 lg:col-span-8 flex flex-col justify-center px-4 md:pl-12 py-32 relative z-20">
+                <div className="col-span-12 lg:col-span-8 flex flex-col justify-center px-4 md:pl-12 py-32 relative z-20 overflow-y-auto scrollbar-hide h-full">
                     <motion.div variants={container} initial="hidden" animate="show" className="space-y-12">
 
                         {/* Headline */}
@@ -82,7 +102,7 @@ export function AuthenticationPage() {
                             </motion.h1>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start pt-16 border-t border-zinc-100">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-start pt-16">
                             <div className="overflow-hidden">
                                 <motion.p variants={item} className="text-xl text-zinc-500 font-light leading-relaxed tracking-tight">
                                     A workspace designed for your creative rhythm. Storyboard, synthesize, and deploy without the friction.
@@ -121,18 +141,29 @@ export function AuthenticationPage() {
                                 { src: "/showcase/art6.png", aspect: "aspect-square" },
                                 { src: "/showcase/art8.png", aspect: "aspect-[4/5]" },
                                 { src: "/showcase/art7.png", aspect: "aspect-[2/3]" },
-                                { src: "/showcase/art9.png", aspect: "aspect-square" },
+                                { src: "/showcase/art9.mp4", aspect: "aspect-square" },
                                 { src: "/showcase/art10.png", aspect: "aspect-[3/4]" },
                                 { src: "/showcase/art2.png", aspect: "aspect-[4/5]" },
                                 { src: "/showcase/art3.png", aspect: "aspect-[3/2]" },
                                 { src: "/showcase/art4.png", aspect: "aspect-video" }
                             ].map((item, i) => (
                                 <div key={i} className={`w-full relative overflow-hidden ${item.aspect}`}>
-                                    <img
-                                        src={item.src}
-                                        alt={`Showcase ${i}`}
-                                        className="w-full h-full object-cover grayscale-[0.1] hover:grayscale-0 transition-all duration-1000"
-                                    />
+                                    {item.src.endsWith('.mp4') ? (
+                                        <video
+                                            src={item.src}
+                                            autoPlay
+                                            muted
+                                            loop
+                                            playsInline
+                                            className="w-full h-full object-cover grayscale-[0.1] hover:grayscale-0 transition-all duration-1000"
+                                        />
+                                    ) : (
+                                        <img
+                                            src={item.src}
+                                            alt={`Showcase ${i}`}
+                                            className="w-full h-full object-cover grayscale-[0.1] hover:grayscale-0 transition-all duration-1000"
+                                        />
+                                    )}
                                     <div className="absolute inset-0 border-[0.5px] border-white/10" />
                                 </div>
                             ))}
