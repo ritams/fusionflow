@@ -137,7 +137,7 @@ export function WavyLine({
         return (
             <div className="absolute top-0 bottom-0 right-0 w-0 flex flex-col items-center justify-center pointer-events-none">
                 <svg
-                    className="h-full w-[400px] overflow-visible text-zinc-200/60"
+                    className="h-full w-[400px] overflow-visible text-zinc-400"
                     style={{ height: '100%' }}
                     preserveAspectRatio="none"
                 >
@@ -157,7 +157,7 @@ export function WavyLine({
         return (
             <div className="absolute left-0 right-0 h-0 flex flex-row items-center justify-start pointer-events-none">
                 <svg
-                    className="w-full h-[400px] overflow-visible text-zinc-200/60"
+                    className="w-full h-[400px] overflow-visible text-zinc-400"
                     style={{ width: '100%' }}
                     preserveAspectRatio="none"
                 >

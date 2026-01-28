@@ -1,12 +1,11 @@
 "use client"
 
 import * as React from "react"
-import { Layers, Sparkles, FolderOpen, Mic, History, Settings, Zap } from "lucide-react"
+import { Layers, Sparkles, FolderOpen, History, Settings, Database } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
     Tooltip,
     TooltipContent,
-    TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Button } from "@/components/ui/button"
@@ -18,19 +17,16 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-    { icon: Layers, label: "Storyboard", id: "storyboard" },
-    { icon: Sparkles, label: "Generative", id: "brand" },
-    { icon: FolderOpen, label: "Assets", id: "assets" },
-    { icon: Zap, label: "Actions", id: "actions" },
-    { icon: History, label: "History", id: "versions" },
+    { icon: Sparkles, label: "Canvas", id: "canvas" },
+    { icon: Database, label: "Assets", id: "assets" },
 ]
 
 export function LeftRail() {
-    const [active, setActive] = React.useState("storyboard")
+    const [active, setActive] = React.useState("canvas")
 
     return (
-        <div className="w-16 lg:w-20 border-r border-zinc-200/60 bg-white/50 backdrop-blur-sm flex flex-col items-center py-8 gap-6 z-20 h-full">
-            <TooltipProvider delayDuration={0}>
+        <div className="flex flex-col h-full py-6 pl-6 z-20 pointer-events-none">
+            <div className="w-16 flex flex-col items-center py-4 gap-4 bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl border border-white/20 pointer-events-auto">
                 {navItems.map((item) => (
                     <Tooltip key={item.id}>
                         <TooltipTrigger asChild>
@@ -38,40 +34,36 @@ export function LeftRail() {
                                 variant="ghost"
                                 size="icon"
                                 className={cn(
-                                    "h-10 w-10 lg:h-12 lg:w-12 rounded-xl transition-all duration-300 group relative",
+                                    "h-10 w-10 rounded-xl transition-all duration-300 relative",
                                     active === item.id
-                                        ? "bg-black text-white shadow-lg shadow-black/20"
-                                        : "text-zinc-400 hover:text-black hover:bg-zinc-100"
+                                        ? "bg-blue-50 text-blue-600 shadow-inner"
+                                        : "text-zinc-400 hover:text-zinc-700 hover:bg-zinc-50"
                                 )}
                                 onClick={() => setActive(item.id)}
                             >
-                                <item.icon className={cn("h-5 w-5 transition-transform duration-300", active === item.id ? "scale-100" : "group-hover:scale-110")} />
+                                <item.icon className={cn("h-5 w-5 transition-transform duration-300", active === item.id ? "scale-100" : "scale-90")} />
                                 <span className="sr-only">{item.label}</span>
 
                                 {active === item.id && (
-                                    <span className="absolute -right-1 top-1 flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#3b82f6] opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-[#3b82f6]"></span>
-                                    </span>
+                                    <span className="absolute left-0 top-1/2 -translate-y-1/2 h-4 w-1 rounded-r-full bg-blue-500" />
                                 )}
                             </Button>
                         </TooltipTrigger>
-                        <TooltipContent side="right" className="font-medium text-xs bg-black text-white border-none ml-2">
+                        <TooltipContent side="right" className="font-medium text-xs ml-4">
                             {item.label}
                         </TooltipContent>
                     </Tooltip>
                 ))}
-            </TooltipProvider>
 
-            <div className="mt-auto flex flex-col gap-4">
-                <div className="w-8 h-[1px] bg-zinc-200 mx-auto" />
+                <div className="w-8 h-[1px] bg-zinc-100 mx-auto my-2" />
+
                 <Tooltip>
                     <TooltipTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-10 w-10 text-zinc-400 hover:text-black hover:bg-zinc-100 rounded-xl">
+                        <Button variant="ghost" size="icon" className="h-10 w-10 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-50 rounded-xl transition-all">
                             <Settings className="h-5 w-5" />
                         </Button>
                     </TooltipTrigger>
-                    <TooltipContent side="right" className="bg-black text-white border-none ml-2">Settings</TooltipContent>
+                    <TooltipContent side="right" className="ml-4">Settings</TooltipContent>
                 </Tooltip>
             </div>
         </div>
