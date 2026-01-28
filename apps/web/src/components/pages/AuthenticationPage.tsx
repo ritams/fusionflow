@@ -94,7 +94,7 @@ export function AuthenticationPage() {
                 : "bg-transparent backdrop-blur-none border-none shadow-none"
                 }`}>
                 <div className="flex items-center gap-2 text-sm font-black tracking-tighter pointer-events-auto text-black">
-                    <div className="w-1.5 h-1.5 rounded-full bg-[#3b82f6]" />
+                    <div className="w-2 h-3 rounded-none -skew-x-12 bg-[#3b82f6]" />
                     <span>FusionFlow</span>
                 </div>
 
@@ -117,23 +117,18 @@ export function AuthenticationPage() {
                     className="fixed inset-0 z-0 pointer-events-none overflow-hidden scale-110"
                 >
                     {/* Horizontal Grid Lines - 6 Equispaced Lines (0-110vh) - HIDDEN ON MOBILE */}
+                    {/* Horizontal Grid Lines - 4 Equispaced Lines (0-100vh) - HIDDEN ON MOBILE */}
                     <div className="hidden lg:block">
                         <div className="absolute top-[0vh] left-0 right-0">
                             <WavyLine orientation="horizontal" />
                         </div>
-                        <div className="absolute top-[22vh] left-0 right-0">
-                            <WavyLine orientation="horizontal" />
-                        </div>
-                        <div className="absolute top-[44vh] left-0 right-0">
+                        <div className="absolute top-[33vh] left-0 right-0">
                             <WavyLine orientation="horizontal" />
                         </div>
                         <div className="absolute top-[66vh] left-0 right-0">
                             <WavyLine orientation="horizontal" />
                         </div>
-                        <div className="absolute top-[88vh] left-0 right-0">
-                            <WavyLine orientation="horizontal" />
-                        </div>
-                        <div className="absolute top-[110vh] left-0 right-0">
+                        <div className="absolute top-[100vh] left-0 right-0">
                             <WavyLine orientation="horizontal" />
                         </div>
                     </div>
@@ -185,9 +180,9 @@ export function AuthenticationPage() {
                                     <span
                                         className="relative inline-block px-4 -rotate-2 bg-[#3b82f6] text-white shadow-[0_10px_30px_-5px_rgba(59,130,246,0.4)] transform origin-center text-[22vw] md:text-[16vw] lg:text-[8vw]"
                                     >
-                                        flow
+                                        flow.
                                     </span>
-                                    <span className="text-[10vw] md:text-[8vw] lg:text-[4vw] font-bold">.</span>
+
                                 </motion.span>
                             </motion.h1>
                         </div>
