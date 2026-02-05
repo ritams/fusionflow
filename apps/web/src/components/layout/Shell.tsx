@@ -10,9 +10,9 @@ interface ShellProps {
     showRightRail?: boolean
 }
 
-export function Shell({ children, showRightRail = true }: ShellProps) {
+export function Shell({ children, showRightRail = false, showTopBar = true, className }: ShellProps & { className?: string; showTopBar?: boolean }) {
     return (
-        <div className="h-screen w-screen bg-background text-foreground overflow-hidden font-sans selection:bg-blue-500 selection:text-white relative">
+        <div className={`h-screen w-screen bg-background text-foreground overflow-hidden font-sans selection:bg-[#3b82f6] selection:text-white relative ${className || ''}`}>
 
             {/* Full Screen Canvas Layer */}
             <main className="absolute inset-0 z-0">
@@ -20,9 +20,11 @@ export function Shell({ children, showRightRail = true }: ShellProps) {
             </main>
 
             {/* Floating Top Bar Layer */}
-            <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
-                <TopBar />
-            </div>
+            {showTopBar && (
+                <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
+                    <TopBar />
+                </div>
+            )}
 
             {/* Floating Right Rail Layer */}
             {showRightRail && (
