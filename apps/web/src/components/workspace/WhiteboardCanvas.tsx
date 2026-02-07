@@ -32,12 +32,7 @@ export function WhiteboardCanvas({ children }: WhiteboardCanvasProps) {
         <div className="absolute inset-0 z-0 bg-background overflow-hidden">
 
             <InfiniteCanvas onDrop={handleDrop}>
-                {/* Background Text in World Space */}
-                <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-[-1]">
-                    <span className="text-[20vw] font-bold text-black/[0.03] tracking-widest whitespace-nowrap">
-                        CANVAS
-                    </span>
-                </div>
+
 
                 {assets
                     .filter(asset => asset.type !== 'text' && asset.isVisibleOnCanvas)

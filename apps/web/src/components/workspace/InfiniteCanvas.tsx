@@ -150,7 +150,7 @@ export function InfiniteCanvas({ children, onDrop }: InfiniteCanvasProps) {
             >
                 {/* Background Text in World Space */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-[-1]">
-                    <span className="text-[20vw] font-bold text-black/[0.03] tracking-widest whitespace-nowrap">
+                    <span className="text-[20vw] font-thin text-black/[0.03] tracking-widest whitespace-nowrap">
                         CANVAS
                     </span>
                 </div>

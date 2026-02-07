@@ -1,5 +1,6 @@
 import { NextAuthOptions } from "next-auth"
 import GoogleProvider from "next-auth/providers/google"
+import jwt from "jsonwebtoken"
 
 export const authOptions: NextAuthOptions = {
     providers: [
@@ -15,20 +16,33 @@ export const authOptions: NextAuthOptions = {
         strategy: "jwt",
     },
     callbacks: {
-        async jwt({ token, account }) {
-            // Persist the OAuth access_token and or the user id to the token right after signin
-            if (account) {
-                token.id_token = account.id_token
+        async jwt({ token, account, user }) {
+            // On initial sign in, add user info to token
+            if (account && user) {
+                token.email = user.email
+                token.name = user.name
+                token.picture = user.image
             }
             return token
         },
         async session({ session, token }) {
-            // Send properties to the client, like an access_token and user id from a provider.
-            if (session.user) {
+            // Create a custom JWT signed with our secret that the API can verify
+            const secret = process.env.NEXTAUTH_SECRET
+            if (secret && token.email) {
+                const accessToken = jwt.sign(
+                    {
+                        email: token.email,
+                        name: token.name,
+                        picture: token.picture
+                    },
+                    secret,
+                    { expiresIn: '1d' }
+                )
                 // @ts-ignore
-                session.id_token = token.id_token
+                session.accessToken = accessToken
             }
             return session
         },
     },
 }
+

@@ -31,7 +31,7 @@ export function AssetProvider({ children }: { children: React.ReactNode }) {
     // Helper to get auth header
     const getAuthHeader = useCallback((): Record<string, string> => {
         // @ts-ignore
-        const token = session?.id_token
+        const token = session?.accessToken
 
         if (!token) return {}
 

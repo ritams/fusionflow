@@ -3,21 +3,68 @@
 import * as React from "react"
 import { useState } from "react"
 import { Send, Image as ImageIcon, Loader2 } from "lucide-react"
+import { useSession } from "next-auth/react"
+import { useAssets } from "@/context/AssetContext"
 
 export function ChatWidget() {
     const [input, setInput] = useState("")
     const [loading, setLoading] = useState(false)
     const [attachments, setAttachments] = useState<{ id: string, url: string, type: 'image' | 'video' }[]>([])
+    const { data: session } = useSession()
+    const { refreshAssets } = useAssets()
 
     const handleSend = async () => {
         if ((!input.trim() && attachments.length === 0) || loading) return
         setLoading(true)
 
         try {
-            // TODO: Call backend API
-            console.log("Sending prompt:", input, "Attachments:", attachments)
-            // Mock delay
-            await new Promise(resolve => setTimeout(resolve, 1000))
+            // @ts-ignore
+            const token = session?.accessToken
+            if (!token) {
+                console.error("No auth token available")
+                return
+            }
+
+            const headers: HeadersInit = {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+
+            let response
+
+            // Call API directly to avoid Next.js proxy timeout for long-running requests
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
+
+            if (attachments.length > 0) {
+                // Edit mode: send all attached images
+                response = await fetch(`${API_URL}/api/generate/edit`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({
+                        imageUrls: attachments.map(a => a.url),
+                        prompt: input
+                    })
+                })
+            } else {
+                // Generate mode: create new image from prompt
+                response = await fetch(`${API_URL}/api/generate`, {
+                    method: 'POST',
+                    headers,
+                    body: JSON.stringify({ prompt: input })
+                })
+            }
+
+            if (!response.ok) {
+                const error = await response.json()
+                throw new Error(error.error || 'Generation failed')
+            }
+
+            const result = await response.json()
+            console.log("Generated:", result)
+
+            // Refresh assets to show the new image on canvas
+            await refreshAssets()
+
         } catch (error) {
             console.error("Error generating:", error)
         } finally {
@@ -104,3 +151,4 @@ export function ChatWidget() {
         </div>
     )
 }
+

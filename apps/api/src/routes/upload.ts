@@ -25,25 +25,15 @@ const upload = multer({ storage })
 
 // Middleware to mock auth or extract user
 const extractUser = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    // For now, trust the Authorization header email as a simple mock if not full JWT
-    // In production, use the existing verifyToken middleware
     const authHeader = req.headers.authorization
     if (!authHeader) return res.status(401).json({ error: 'Unauthorized' })
 
-    // Simplistic: expects "Bearer <email>" or real token
     const token = authHeader.split(' ')[1]
     console.log(`[Upload Debug] Token/Email: ${token}`)
 
     // Try to find user by email directly for this simple implementation
-    let user = await User.findOne({ email: token })
+    const user = await User.findOne({ email: token })
     console.log(`[Upload Debug] User found: ${user ? user._id : 'No'}`)
-
-    // If not found, maybe decode standard JWT (if used) or fail
-    if (!user) {
-        // Fallback: try finding by email if passed as "Bearer email@example.com"
-        // This is a loose check for the prototype
-        user = await User.findOne({ email: token })
-    }
 
     if (!user) {
         console.error(`[Upload Debug] User lookup failed for token: ${token}`)
@@ -61,7 +51,8 @@ router.post('/', extractUser, upload.single('file'), async (req, res) => {
         }
 
         const user = (req as any).user
-        const fileUrl = `http://localhost:3001/uploads/${req.file.filename}` // Hardcoded port 3001 for API
+        const baseUrl = process.env.API_BASE_URL || 'http://localhost:3001'
+        const fileUrl = `${baseUrl}/uploads/${req.file.filename}`
 
         const type = req.file.mimetype.startsWith('video') ? 'video' : 'image'
 
