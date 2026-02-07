@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import mongoose from 'mongoose';
+import logger from './utils/logger';
 
 dotenv.config();
 
@@ -14,8 +15,8 @@ app.use(express.json());
 
 // Database Connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/fusionflow')
-  .then(() => console.log('Connected to MongoDB'))
-  .catch((err) => console.error('MongoDB connection error:', err));
+  .then(() => logger.db('Connected to MongoDB'))
+  .catch((err) => logger.error('MongoDB connection failed', { context: 'DB', data: { error: String(err) } }));
 
 import userRoutes from './routes/user';
 import assetRoutes from './routes/assets';
@@ -37,5 +38,5 @@ app.get('/health', (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+  logger.info(`Server running at http://localhost:${port}`);
 });

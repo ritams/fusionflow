@@ -2,14 +2,13 @@
 
 import * as React from "react"
 import { useAssets } from "@/context/AssetContext"
-import { ChevronLeft, ChevronRight, X, Type } from "lucide-react"
+import { ChevronLeft, ChevronRight, X, Image as ImageIcon, Film } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function AssetSidebar() {
     const { assets, updateAsset, deleteAsset } = useAssets()
     const [isCollapsed, setIsCollapsed] = React.useState(false)
 
-    // Handler to "add back" to canvas if removed
     const handleAddToCanvas = (id: string, e: React.MouseEvent) => {
         e.stopPropagation()
         updateAsset(id, { isVisibleOnCanvas: true })
@@ -22,7 +21,6 @@ export function AssetSidebar() {
 
     return (
         <>
-            {/* ... toggle button ... */}
             <Button
                 variant="ghost"
                 size="icon"
@@ -36,8 +34,6 @@ export function AssetSidebar() {
                 className={`fixed left-0 top-0 bottom-0 bg-white/80 backdrop-blur-md border-r border-zinc-200 z-40 p-4 transition-all duration-300 w-64 flex flex-col ${isCollapsed ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'}`}
             >
                 <h2 className="text-xs font-semibold mb-6 text-[#3b82f6] uppercase tracking-widest pl-1">Library</h2>
-
-
 
                 <div className="flex-1 overflow-y-auto pr-2 space-y-4">
                     <div className="grid grid-cols-2 gap-3">
@@ -61,13 +57,24 @@ export function AssetSidebar() {
                                     <img src={asset.url || ''} alt="Asset" className="w-full h-full object-cover" />
                                 )}
 
+                                {/* Type Badge */}
+                                {(asset.type === 'image' || asset.type === 'video') && (
+                                    <div className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide flex items-center gap-0.5 ${asset.type === 'video'
+                                            ? 'bg-purple-500/90 text-white'
+                                            : 'bg-blue-500/90 text-white'
+                                        }`}>
+                                        {asset.type === 'video' ? <Film className="w-2.5 h-2.5" /> : <ImageIcon className="w-2.5 h-2.5" />}
+                                        {asset.type}
+                                    </div>
+                                )}
+
                                 {!asset.isVisibleOnCanvas && (
                                     <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <span className="text-[10px] font-bold text-white bg-black/50 px-2 py-1 rounded-full backdrop-blur-sm">ADD</span>
                                     </div>
                                 )}
 
-                                {/* Delete Permanent Button */}
+                                {/* Delete Button */}
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation()
@@ -87,3 +94,4 @@ export function AssetSidebar() {
         </>
     )
 }
+

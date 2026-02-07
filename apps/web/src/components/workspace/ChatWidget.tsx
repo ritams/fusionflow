@@ -2,13 +2,14 @@
 
 import * as React from "react"
 import { useState } from "react"
-import { Send, Image as ImageIcon, Loader2 } from "lucide-react"
+import { Send, Image as ImageIcon, Video, Loader2 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useAssets } from "@/context/AssetContext"
 
 export function ChatWidget() {
     const [input, setInput] = useState("")
     const [loading, setLoading] = useState(false)
+    const [outputMode, setOutputMode] = useState<'image' | 'video'>('image')
     const [attachments, setAttachments] = useState<{ id: string, url: string, type: 'image' | 'video' }[]>([])
     const { data: session } = useSession()
     const { refreshAssets } = useAssets()
@@ -31,27 +32,46 @@ export function ChatWidget() {
             }
 
             let response
-
-            // Call API directly to avoid Next.js proxy timeout for long-running requests
             const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
 
             if (attachments.length > 0) {
-                // Edit mode: send all attached images
-                response = await fetch(`${API_URL}/api/generate/edit`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({
-                        imageUrls: attachments.map(a => a.url),
-                        prompt: input
+                if (outputMode === 'video') {
+                    // Animate mode: image-to-video
+                    response = await fetch(`${API_URL}/api/generate/animate`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            imageUrl: attachments[0].url,
+                            prompt: input
+                        })
                     })
-                })
+                } else {
+                    // Edit mode: send all attached images
+                    response = await fetch(`${API_URL}/api/generate/edit`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({
+                            imageUrls: attachments.map(a => a.url),
+                            prompt: input
+                        })
+                    })
+                }
             } else {
-                // Generate mode: create new image from prompt
-                response = await fetch(`${API_URL}/api/generate`, {
-                    method: 'POST',
-                    headers,
-                    body: JSON.stringify({ prompt: input })
-                })
+                if (outputMode === 'video') {
+                    // Text-to-video
+                    response = await fetch(`${API_URL}/api/generate/video`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ prompt: input })
+                    })
+                } else {
+                    // Text-to-image
+                    response = await fetch(`${API_URL}/api/generate`, {
+                        method: 'POST',
+                        headers,
+                        body: JSON.stringify({ prompt: input })
+                    })
+                }
             }
 
             if (!response.ok) {
@@ -62,7 +82,7 @@ export function ChatWidget() {
             const result = await response.json()
             console.log("Generated:", result)
 
-            // Refresh assets to show the new image on canvas
+            // Refresh assets to show the new content on canvas
             await refreshAssets()
 
         } catch (error) {
@@ -81,9 +101,7 @@ export function ChatWidget() {
             if (jsonData) {
                 const data = JSON.parse(jsonData)
                 if (data.type && data.type !== 'text') {
-                    // Add to attachments if not already present
                     setAttachments(prev => {
-                        // Use _id from the asset
                         const assetId = data._id || data.id;
                         if (prev.find(a => a.id === assetId)) return prev
                         return [...prev, { id: assetId, url: data.content || data.url, type: data.type }]
@@ -103,6 +121,21 @@ export function ChatWidget() {
         e.preventDefault()
     }
 
+    const toggleMode = () => {
+        setOutputMode(m => m === 'image' ? 'video' : 'image')
+    }
+
+    const getPlaceholder = () => {
+        if (attachments.length > 0) {
+            return outputMode === 'video'
+                ? "Describe how to animate this..."
+                : "Describe edits to make..."
+        }
+        return outputMode === 'video'
+            ? "Describe a video to generate..."
+            : "Describe an image to generate..."
+    }
+
     return (
         <div
             className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50 w-full max-w-lg group"
@@ -110,9 +143,26 @@ export function ChatWidget() {
             onDragOver={handleDragOver}
         >
             <div className="bg-white/80 backdrop-blur-xl border border-white/20 rounded-[28px] shadow-2xl p-2 flex flex-wrap items-center gap-2 px-3 transition-all duration-300 group-hover:shadow-[0_8px_30px_rgb(59,130,246,0.15)] group-hover:border-[#3b82f6]/20">
-                <div className="p-2 text-zinc-400 group-hover:text-[#3b82f6] transition-colors duration-300 self-end mb-0.5">
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin text-[#3b82f6]" /> : <ImageIcon className="h-5 w-5" />}
-                </div>
+                {/* Mode Toggle Button */}
+                <button
+                    onClick={toggleMode}
+                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all font-medium text-sm ${outputMode === 'video'
+                            ? 'bg-purple-100 text-purple-600 border-purple-200 hover:bg-purple-200'
+                            : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                        }`}
+                    title={`Click to switch to ${outputMode === 'image' ? 'video' : 'image'} mode`}
+                >
+                    {loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : outputMode === 'video' ? (
+                        <Video className="h-4 w-4" />
+                    ) : (
+                        <ImageIcon className="h-4 w-4" />
+                    )}
+                    <span className="uppercase text-[10px] tracking-wide font-semibold">
+                        {outputMode}
+                    </span>
+                </button>
 
                 {/* Attachments Preview */}
                 {attachments.map(att => (
@@ -134,7 +184,7 @@ export function ChatWidget() {
 
                 <input
                     className="flex-1 bg-transparent border-none outline-none text-sm text-zinc-800 placeholder:text-zinc-400 h-10 min-w-[50px]"
-                    placeholder={attachments.length > 0 ? "Ask about this image..." : "Describe an image to generate..."}
+                    placeholder={getPlaceholder()}
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && handleSend()}
@@ -151,4 +201,3 @@ export function ChatWidget() {
         </div>
     )
 }
-

@@ -1,8 +1,9 @@
 import express from 'express';
 import path from 'path';
-import { generateImage, editImage, inpaintImage } from '../services/fal';
+import { generateImage, editImage, inpaintImage, generateVideo, animateImage } from '../services/fal';
 import { Asset } from '../models/Asset';
 import { authenticateToken } from '../middleware/auth';
+import logger from '../utils/logger';
 
 const router = express.Router();
 
@@ -51,7 +52,6 @@ async function urlToBase64(url: string): Promise<string> {
     // Extract filename from localhost URL
     const match = url.match(/\/uploads\/(.+)$/);
     if (!match) {
-        console.log('URL does not match upload pattern, returning as-is:', url);
         return url;
     }
 
@@ -75,10 +75,10 @@ async function urlToBase64(url: string): Promise<string> {
         };
         const mimeType = mimeTypes[ext] || 'application/octet-stream';
 
-        console.log(`Converted ${filename} to base64 (${mimeType})`);
+        logger.debug(`Converted ${filename} to base64`, { context: 'API', data: { mimeType } });
         return `data:${mimeType};base64,${base64}`;
     } catch (err) {
-        console.error('Error reading file for base64:', err);
+        logger.error('Failed to read file for base64', { context: 'API' });
         return url; // Fallback to original URL
     }
 }
@@ -97,7 +97,7 @@ router.post('/edit', async (req, res) => {
     try {
         // Convert all localhost URLs to base64 so fal.ai can access them
         const processedUrls = await Promise.all(urls.map(url => urlToBase64(url)));
-        console.log(`Processing ${processedUrls.length} image(s) for edit`);
+        logger.api('Processing edit request', { imageCount: processedUrls.length });
 
         const editedUrl = await editImage(processedUrls, prompt);
 
@@ -151,6 +151,74 @@ router.post('/inpaint', async (req, res) => {
     } catch (error) {
         console.error('Inpaint failed:', error);
         res.status(500).json({ error: 'Failed to inpaint image' });
+    }
+});
+
+// Text-to-Video generation
+router.post('/video', async (req, res) => {
+    const { prompt } = req.body;
+
+    if (!prompt) {
+        return res.status(400).json({ error: 'Prompt is required' });
+    }
+
+    try {
+        logger.api('Processing video request');
+        const videoUrl = await generateVideo(prompt);
+
+        const assetData = {
+            userId: req.user._id,
+            url: videoUrl,
+            type: 'video',
+            prompt
+        };
+
+        const asset = new Asset(assetData);
+        await asset.save();
+
+        res.json({
+            videoUrl,
+            asset
+        });
+
+    } catch (error) {
+        logger.error('Video generation failed', { context: 'API' });
+        res.status(500).json({ error: 'Failed to generate video' });
+    }
+});
+
+// Image-to-Video (animate)
+router.post('/animate', async (req, res) => {
+    const { imageUrl, prompt } = req.body;
+
+    if (!imageUrl || !prompt) {
+        return res.status(400).json({ error: 'imageUrl and prompt are required' });
+    }
+
+    try {
+        // Convert localhost URL to base64 if needed
+        const processedUrl = await urlToBase64(imageUrl);
+        logger.api('Processing animate request');
+        const videoUrl = await animateImage(processedUrl, prompt);
+
+        const assetData = {
+            userId: req.user._id,
+            url: videoUrl,
+            type: 'video',
+            prompt: `Animate: ${prompt}`
+        };
+
+        const asset = new Asset(assetData);
+        await asset.save();
+
+        res.json({
+            videoUrl,
+            asset
+        });
+
+    } catch (error) {
+        logger.error('Animation failed', { context: 'API' });
+        res.status(500).json({ error: 'Failed to animate image' });
     }
 });
 
