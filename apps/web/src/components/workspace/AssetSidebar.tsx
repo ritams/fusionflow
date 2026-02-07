@@ -31,12 +31,12 @@ export function AssetSidebar() {
             </Button>
 
             <div
-                className={`fixed left-0 top-0 bottom-0 bg-white/80 backdrop-blur-md border-r border-zinc-200 z-40 p-4 transition-all duration-300 w-64 flex flex-col ${isCollapsed ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'}`}
+                className={`fixed left-0 top-0 bottom-0 bg-white/80 backdrop-blur-md border-r border-zinc-200 z-40 pl-4 pt-4 pb-4 pr-1 transition-all duration-300 w-64 flex flex-col ${isCollapsed ? '-translate-x-full opacity-0' : 'translate-x-0 opacity-100'}`}
             >
-                <h2 className="text-xs font-semibold mb-6 text-[#3b82f6] uppercase tracking-widest pl-1">Library</h2>
+                <h2 className="text-xs font-semibold mb-6 text-[#3b82f6] uppercase tracking-widest pl-1 pr-3">Library</h2>
 
                 <div
-                    className="flex-1 overflow-y-auto pr-4 space-y-4"
+                    className="flex-1 overflow-y-auto space-y-4 pr-1"
                     style={{
                         scrollbarWidth: 'thin',
                         scrollbarColor: '#93c5fd transparent'
@@ -57,7 +57,7 @@ export function AssetSidebar() {
                             background-color: #60a5fa;
                         }
                     `}</style>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 gap-3 pr-4">
                         {assets.map((asset) => (
                             <div
                                 key={asset._id}
