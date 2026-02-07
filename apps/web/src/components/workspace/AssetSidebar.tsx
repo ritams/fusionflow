@@ -35,7 +35,28 @@ export function AssetSidebar() {
             >
                 <h2 className="text-xs font-semibold mb-6 text-[#3b82f6] uppercase tracking-widest pl-1">Library</h2>
 
-                <div className="flex-1 overflow-y-auto pr-2 space-y-4">
+                <div
+                    className="flex-1 overflow-y-auto pr-4 space-y-4"
+                    style={{
+                        scrollbarWidth: 'thin',
+                        scrollbarColor: '#93c5fd transparent'
+                    }}
+                >
+                    <style jsx>{`
+                        div::-webkit-scrollbar {
+                            width: 4px;
+                        }
+                        div::-webkit-scrollbar-track {
+                            background: transparent;
+                        }
+                        div::-webkit-scrollbar-thumb {
+                            background-color: #93c5fd;
+                            border-radius: 4px;
+                        }
+                        div::-webkit-scrollbar-thumb:hover {
+                            background-color: #60a5fa;
+                        }
+                    `}</style>
                     <div className="grid grid-cols-2 gap-3">
                         {assets.map((asset) => (
                             <div
@@ -60,8 +81,8 @@ export function AssetSidebar() {
                                 {/* Type Badge */}
                                 {(asset.type === 'image' || asset.type === 'video') && (
                                     <div className={`absolute bottom-1 left-1 px-1.5 py-0.5 rounded text-[9px] font-semibold uppercase tracking-wide flex items-center gap-0.5 ${asset.type === 'video'
-                                            ? 'bg-purple-500/90 text-white'
-                                            : 'bg-blue-500/90 text-white'
+                                        ? 'bg-purple-500/90 text-white'
+                                        : 'bg-blue-500/90 text-white'
                                         }`}>
                                         {asset.type === 'video' ? <Film className="w-2.5 h-2.5" /> : <ImageIcon className="w-2.5 h-2.5" />}
                                         {asset.type}

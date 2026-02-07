@@ -16,11 +16,30 @@ export const generateImage = async (prompt: string): Promise<string> => {
             logs: false,
         });
 
+        // Debug: Log the response keys to understand structure
+        logger.debug('Fal response keys: ' + Object.keys(result).join(', '), { context: 'FAL' });
+
+        // Try different response structures
         if (result.images && result.images.length > 0) {
             logger.fal('Image generated successfully');
             return result.images[0].url;
         }
-        throw new Error("No image returned");
+        if (result.data?.images && result.data.images.length > 0) {
+            logger.fal('Image generated successfully');
+            return result.data.images[0].url;
+        }
+        if (result.image?.url) {
+            logger.fal('Image generated successfully');
+            return result.image.url;
+        }
+        if (result.output?.url) {
+            logger.fal('Image generated successfully');
+            return result.output.url;
+        }
+
+        // Log full response for debugging
+        logger.error('Unexpected response structure', { context: 'FAL', data: { keys: Object.keys(result) } });
+        throw new Error("No image returned - keys: " + Object.keys(result).join(', '));
 
     } catch (error) {
         logger.error('Image generation failed', { context: 'FAL', data: { error: String(error) } });

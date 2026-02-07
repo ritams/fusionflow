@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState } from "react"
-import { Send, Image as ImageIcon, Video, Loader2 } from "lucide-react"
+import { ArrowRight, Image as ImageIcon, Video, Loader2 } from "lucide-react"
 import { useSession } from "next-auth/react"
 import { useAssets } from "@/context/AssetContext"
 
@@ -147,8 +147,8 @@ export function ChatWidget() {
                 <button
                     onClick={toggleMode}
                     className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border transition-all font-medium text-sm ${outputMode === 'video'
-                            ? 'bg-purple-100 text-purple-600 border-purple-200 hover:bg-purple-200'
-                            : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
+                        ? 'bg-purple-100 text-purple-600 border-purple-200 hover:bg-purple-200'
+                        : 'bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100'
                         }`}
                     title={`Click to switch to ${outputMode === 'image' ? 'video' : 'image'} mode`}
                 >
@@ -193,9 +193,25 @@ export function ChatWidget() {
                 <button
                     onClick={handleSend}
                     disabled={loading || (!input.trim() && attachments.length === 0)}
-                    className="p-2 rounded-full bg-[#3b82f6] text-white hover:bg-[#2563eb] disabled:opacity-50 disabled:hover:bg-[#3b82f6] transition-all shadow-md hover:shadow-lg active:scale-95 self-end"
+                    className={`
+                        ml-1 px-4 py-2 rounded-full font-medium text-sm
+                        transition-all duration-200 ease-out
+                        disabled:opacity-40 disabled:cursor-not-allowed
+                        flex items-center gap-1.5
+                        ${loading
+                            ? 'bg-zinc-100 text-zinc-400'
+                            : 'bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 hover:shadow-lg hover:shadow-blue-500/25 hover:scale-105 active:scale-100'
+                        }
+                    `}
                 >
-                    <Send className="h-4 w-4" />
+                    {loading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                        <>
+                            <span>Create</span>
+                            <ArrowRight className="h-3.5 w-3.5" />
+                        </>
+                    )}
                 </button>
             </div>
         </div>
