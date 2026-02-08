@@ -109,9 +109,8 @@ export function Timeline() {
             })
 
             // Upload to backend
-            // @ts-ignore
-            const token = session?.accessToken
-            if (!token) {
+            const userEmail = session?.user?.email
+            if (!userEmail) {
                 throw new Error('No auth token')
             }
 
@@ -122,13 +121,15 @@ export function Timeline() {
             const response = await fetch(`${API_URL}/api/upload`, {
                 method: 'POST',
                 headers: {
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${userEmail}`
                 },
                 body: formData
             })
 
             if (!response.ok) {
-                throw new Error('Upload failed')
+                const errorText = await response.text()
+                console.error('Upload failed:', response.status, errorText)
+                throw new Error(`Upload failed: ${response.status} - ${errorText}`)
             }
 
             // Refresh assets and go back to canvas

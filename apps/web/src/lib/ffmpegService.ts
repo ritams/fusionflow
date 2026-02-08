@@ -1,10 +1,21 @@
 import { FFmpeg } from '@ffmpeg/ffmpeg'
-import { fetchFile, toBlobURL } from '@ffmpeg/util'
+import { fetchFile } from '@ffmpeg/util'
 import type { EditorClip, TransitionType, FilterType } from '@/context/EditorContext'
+
+// FFmpeg core URLs - using umd version which works better with bundlers
+const FFMPEG_CORE_URL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.js'
+const FFMPEG_WASM_URL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/umd/ffmpeg-core.wasm'
 
 // Singleton FFmpeg instance
 let ffmpeg: FFmpeg | null = null
 let isLoaded = false
+
+/**
+ * Check if SharedArrayBuffer is available (required for FFmpeg WASM)
+ */
+function checkSharedArrayBuffer(): boolean {
+    return typeof SharedArrayBuffer !== 'undefined'
+}
 
 /**
  * Get or create the FFmpeg instance (lazy loaded)
@@ -12,6 +23,11 @@ let isLoaded = false
 export async function getFFmpeg(onProgress?: (progress: number) => void): Promise<FFmpeg> {
     if (ffmpeg && isLoaded) {
         return ffmpeg
+    }
+
+    // Check for SharedArrayBuffer support
+    if (!checkSharedArrayBuffer()) {
+        console.warn('[FFmpeg] SharedArrayBuffer not available, FFmpeg may not work correctly')
     }
 
     ffmpeg = new FFmpeg()
@@ -24,20 +40,29 @@ export async function getFFmpeg(onProgress?: (progress: number) => void): Promis
     // Progress callback for encoding
     ffmpeg.on('progress', ({ progress }) => {
         if (onProgress) {
-            onProgress(Math.round(progress * 100))
+            // Clamp progress to 0-100 range (FFmpeg can report invalid values)
+            const clampedProgress = Math.max(0, Math.min(100, Math.round(progress * 100)))
+            onProgress(clampedProgress)
         }
     })
 
-    // Load FFmpeg with CDN URLs (lazy load ~25MB)
-    const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.6/dist/esm'
+    try {
+        console.log('[FFmpeg] Loading FFmpeg WASM...')
 
-    await ffmpeg.load({
-        coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
-        wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
-    })
+        await ffmpeg.load({
+            coreURL: FFMPEG_CORE_URL,
+            wasmURL: FFMPEG_WASM_URL,
+        })
 
-    isLoaded = true
-    return ffmpeg
+        console.log('[FFmpeg] FFmpeg loaded successfully!')
+        isLoaded = true
+        return ffmpeg
+    } catch (error) {
+        console.error('[FFmpeg] Failed to load FFmpeg:', error)
+        ffmpeg = null
+        isLoaded = false
+        throw new Error(`FFmpeg failed to load: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
 }
 
 /**
@@ -245,6 +270,55 @@ export async function trimVideo(
 }
 
 /**
+ * Check if a clip needs re-encoding (has modifications)
+ */
+function clipNeedsReencoding(clip: EditorClip): boolean {
+    // Videos with no modifications can use stream copy
+    if (clip.type === 'video') {
+        const hasSpeedChange = clip.speed !== 1
+        const hasFilter = clip.filterEffect && clip.filterEffect !== 'none'
+        const hasTrim = clip.trimStart > 0 || clip.trimEnd < clip.duration
+        // Only re-encode if there are modifications
+        return hasSpeedChange || hasFilter || false // Trim doesn't require re-encoding
+    }
+    // Images always need encoding
+    return true
+}
+
+/**
+ * Fast copy a video segment without re-encoding
+ */
+async function copyVideoSegment(
+    videoUrl: string,
+    startTime: number,
+    duration: number
+): Promise<Uint8Array> {
+    const ff = await getFFmpeg()
+
+    const inputName = 'input_copy.mp4'
+    const outputName = 'output_copy.mp4'
+
+    await ff.writeFile(inputName, await fetchFile(videoUrl))
+
+    // Use stream copy - much faster than re-encoding
+    await ff.exec([
+        '-ss', String(startTime),
+        '-i', inputName,
+        '-t', String(duration),
+        '-c', 'copy',  // Stream copy - no re-encoding
+        '-avoid_negative_ts', 'make_zero',
+        outputName
+    ])
+
+    const data = await ff.readFile(outputName)
+
+    await ff.deleteFile(inputName)
+    await ff.deleteFile(outputName)
+
+    return data as Uint8Array
+}
+
+/**
  * Merge multiple clips into a single video
  */
 export async function mergeClips(
@@ -261,21 +335,29 @@ export async function mergeClips(
         const outputName = `clip_${i}.mp4`
 
         if (clip.type === 'image') {
-            // Convert image to video
+            // Convert image to video (must re-encode)
             const data = await createImageVideo(
                 clip.sourceUrl,
                 clip.duration,
                 clip.kenBurns
             )
             await ff.writeFile(outputName, data)
-        } else {
-            // Process video
+        } else if (clipNeedsReencoding(clip)) {
+            // Process video with re-encoding (has modifications)
             const data = await trimVideo(
                 clip.sourceUrl,
                 clip.trimStart,
                 clip.trimStart + clip.duration / clip.speed,
                 clip.speed,
                 clip.filterEffect
+            )
+            await ff.writeFile(outputName, data)
+        } else {
+            // Fast copy without re-encoding
+            const data = await copyVideoSegment(
+                clip.sourceUrl,
+                clip.trimStart,
+                clip.duration
             )
             await ff.writeFile(outputName, data)
         }
@@ -291,15 +373,13 @@ export async function mergeClips(
     const concatContent = processedFiles.map(f => `file '${f}'`).join('\n')
     await ff.writeFile('concat.txt', concatContent)
 
-    // Merge all clips
+    // Merge all clips with stream copy (fast)
     const finalOutput = 'final_output.mp4'
     await ff.exec([
         '-f', 'concat',
         '-safe', '0',
         '-i', 'concat.txt',
-        '-c:v', 'libx264',
-        '-c:a', 'aac',
-        '-strict', 'experimental',
+        '-c', 'copy',  // Stream copy for final merge
         finalOutput
     ])
 
