@@ -1,3 +1,5 @@
+"use client"
+
 import * as React from "react"
 import { Shell } from "@/components/layout/Shell"
 import { WhiteboardCanvas } from "@/components/workspace/WhiteboardCanvas"
@@ -8,6 +10,29 @@ import { UploadButton } from "@/components/workspace/UploadButton"
 import { AssetProvider } from "@/context/AssetContext"
 import { UserSync } from "@/components/auth/UserSync"
 import { CanvasStateProvider } from "@/context/CanvasStateContext"
+import { EditorProvider, useEditor } from "@/context/EditorContext"
+import { VideoEditor } from "@/components/editor"
+import { EditorToggle } from "@/components/workspace/EditorToggle"
+
+function WorkspaceContent() {
+    const { viewMode } = useEditor()
+
+    if (viewMode === 'editor') {
+        return <VideoEditor />
+    }
+
+    return (
+        <Shell showRightRail={false} showTopBar={false} className="border-0">
+            <WhiteboardCanvas />
+
+            <ProfileButton />
+            <AssetSidebar />
+            <UploadButton />
+            <ChatWidget />
+            <EditorToggle />
+        </Shell>
+    )
+}
 
 export function ClientHome() {
     return (
@@ -15,14 +40,9 @@ export function ClientHome() {
             <UserSync />
             <AssetProvider>
                 <CanvasStateProvider>
-                    <Shell showRightRail={false} showTopBar={false} className="border-0">
-                        <WhiteboardCanvas />
-
-                        <ProfileButton />
-                        <AssetSidebar />
-                        <UploadButton />
-                        <ChatWidget />
-                    </Shell>
+                    <EditorProvider>
+                        <WorkspaceContent />
+                    </EditorProvider>
                 </CanvasStateProvider>
             </AssetProvider>
         </div>

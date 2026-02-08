@@ -43,16 +43,6 @@ export function UploadButton() {
         }
     }
 
-    const handleAddText = () => {
-        // Calculate center of the viewport in canvas coordinates
-        // InfiniteCanvas centers the origin at screen center + offset
-        // So Center = -offset.x / scale, -offset.y / scale
-        const centerX = -offset.x / scale
-        const centerY = -offset.y / scale
-
-        addTextAsset("New Text", { x: centerX, y: centerY })
-    }
-
     return (
         <div className="fixed bottom-8 left-8 z-50 flex items-center gap-4">
             <input

@@ -1,7 +1,9 @@
 import React, { useState } from "react"
-import { X, GripVertical, Pencil, Film, Image as ImageIcon } from "lucide-react"
+import { X, GripVertical, Pencil, Film, Image as ImageIcon, Download, Scissors } from "lucide-react"
 import { Asset, useAssets } from "@/context/AssetContext"
 import { useSession } from "next-auth/react"
+import { useEditor, EditorClip } from "@/context/EditorContext"
+import { getVideoDuration, generateThumbnail } from "@/lib/ffmpegService"
 
 interface AssetControlsProps {
     asset: Asset
@@ -9,15 +11,68 @@ interface AssetControlsProps {
     setTitle: (t: string) => void
     isEditing: boolean
     setIsEditing: (e: boolean) => void
+    viewportSize: { width: number; height: number }
 }
 
-export function AssetControls({ asset, title, setTitle, isEditing, setIsEditing }: AssetControlsProps) {
+// Calculate UI scale factor based on viewport size
+// Base size is 300px - controls scale proportionally
+// Min scale: 0.5 (for very small assets)
+// Max scale: 10.0 (for very large assets)
+function calcUIScale(viewportSize: { width: number; height: number }): number {
+    const baseSize = 300
+    const minDim = Math.min(viewportSize.width, viewportSize.height)
+    const scale = Math.max(0.5, Math.min(10, minDim / baseSize))
+    return scale
+}
+
+export function AssetControls({ asset, title, setTitle, isEditing, setIsEditing, viewportSize }: AssetControlsProps) {
+    const uiScale = calcUIScale(viewportSize)
     const { updateAsset, refreshAssets } = useAssets()
     const { data: session } = useSession()
+    const { addClip, setViewMode } = useEditor()
     const [showPromptModal, setShowPromptModal] = useState(false)
     const [promptInput, setPromptInput] = useState("")
     const [actionType, setActionType] = useState<'edit' | 'animate'>('edit')
     const [isLoading, setIsLoading] = useState(false)
+
+    const handleOpenEditor = async () => {
+        if (!asset.url || (asset.type !== 'image' && asset.type !== 'video')) return
+
+        let duration = 3
+        let thumbnailUrl: string | undefined
+
+        if (asset.type === 'video') {
+            try {
+                duration = await getVideoDuration(asset.url)
+                thumbnailUrl = await generateThumbnail(asset.url, 0)
+            } catch {
+                duration = 5
+            }
+        }
+
+        const clipData: Omit<EditorClip, 'id' | 'startTime'> = {
+            sourceAssetId: asset._id,
+            sourceUrl: asset.url,
+            type: asset.type as 'video' | 'image',
+            duration,
+            trimStart: 0,
+            trimEnd: duration,
+            speed: 1,
+            transitionIn: 'none',
+            transitionOut: 'none',
+            filterEffect: 'none',
+            thumbnailUrl,
+            kenBurns: asset.type === 'image' ? {
+                startZoom: 1,
+                endZoom: 1.2,
+                panX: 0,
+                panY: 0,
+            } : undefined,
+        }
+
+        addClip(clipData)
+        setViewMode('editor')
+    }
 
     const handleRemove = () => {
         updateAsset(asset._id, { isVisibleOnCanvas: false })
@@ -90,7 +145,15 @@ export function AssetControls({ asset, title, setTitle, isEditing, setIsEditing 
     return (
         <>
             {/* Top Bar - Title + Type Badge */}
-            <div className="absolute -top-8 left-0 h-8 flex items-center gap-2 transition-opacity">
+            <div
+                className="absolute left-0 flex items-center gap-2 transition-opacity origin-bottom-left"
+                style={{
+                    top: `${-32 * uiScale}px`,
+                    height: `${32 * uiScale}px`,
+                    transform: `scale(${uiScale})`,
+                    transformOrigin: 'bottom left'
+                }}
+            >
                 <div
                     className="bg-white/80 backdrop-blur-sm shadow-sm text-zinc-400 p-1 rounded cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity"
                     draggable
@@ -135,7 +198,15 @@ export function AssetControls({ asset, title, setTitle, isEditing, setIsEditing 
             </div>
 
             {/* Action Buttons - Right side */}
-            <div className="absolute -top-8 right-0 h-8 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            <div
+                className="absolute right-0 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity origin-bottom-right"
+                style={{
+                    top: `${-32 * uiScale}px`,
+                    height: `${32 * uiScale}px`,
+                    transform: `scale(${uiScale})`,
+                    transformOrigin: 'bottom right'
+                }}
+            >
                 {asset.type === 'image' && (
                     <>
                         <button
@@ -154,6 +225,27 @@ export function AssetControls({ asset, title, setTitle, isEditing, setIsEditing 
                         </button>
                     </>
                 )}
+                {(asset.type === 'image' || asset.type === 'video') && asset.url && (
+                    <a
+                        href={asset.url}
+                        download={`${title || 'asset'}.${asset.type === 'video' ? 'mp4' : 'png'}`}
+                        onPointerDown={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()}
+                        className="bg-white shadow-sm hover:bg-green-500 hover:text-white text-zinc-400 p-1.5 rounded-lg transition-all hover:scale-105"
+                        title="Download"
+                    >
+                        <Download className="w-3.5 h-3.5" />
+                    </a>
+                )}
+                {(asset.type === 'image' || asset.type === 'video') && asset.url && (
+                    <button
+                        onPointerDown={(e) => { e.stopPropagation(); handleOpenEditor() }}
+                        className="bg-white shadow-sm hover:bg-zinc-800 hover:text-white text-zinc-400 p-1.5 rounded-lg transition-all hover:scale-105"
+                        title="Open in Editor"
+                    >
+                        <Scissors className="w-3.5 h-3.5" />
+                    </button>
+                )}
                 <button
                     onPointerDown={(e) => { e.stopPropagation(); handleRemove() }}
                     className="bg-white shadow-sm hover:bg-red-500 hover:text-white text-zinc-400 p-1.5 rounded-lg transition-all hover:scale-105"
@@ -166,7 +258,12 @@ export function AssetControls({ asset, title, setTitle, isEditing, setIsEditing 
             {/* Inline Prompt Modal - Positioned Below Asset */}
             {showPromptModal && (
                 <div
-                    className="absolute top-full left-0 right-0 mt-3 z-50"
+                    className="absolute top-full left-0 right-0 z-50 origin-top-left"
+                    style={{
+                        marginTop: `${12 * uiScale}px`,
+                        transform: `scale(${uiScale})`,
+                        transformOrigin: 'top left'
+                    }}
                     onPointerDown={(e) => e.stopPropagation()}
                 >
                     <div className={`bg-white rounded-xl shadow-xl border p-3 ${actionType === 'animate' ? 'border-purple-200' : 'border-blue-200'

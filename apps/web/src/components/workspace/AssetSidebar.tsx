@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useAssets } from "@/context/AssetContext"
-import { ChevronLeft, ChevronRight, X, Image as ImageIcon, Film } from "lucide-react"
+import { ChevronLeft, ChevronRight, X, Image as ImageIcon, Film, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 export function AssetSidebar() {
@@ -93,6 +93,19 @@ export function AssetSidebar() {
                                     <div className="absolute inset-0 flex items-center justify-center bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <span className="text-[10px] font-bold text-white bg-black/50 px-2 py-1 rounded-full backdrop-blur-sm">ADD</span>
                                     </div>
+                                )}
+
+                                {/* Download Button */}
+                                {(asset.type === 'image' || asset.type === 'video') && asset.url && (
+                                    <a
+                                        href={asset.url}
+                                        download={`${asset.customTitle || 'asset'}.${asset.type === 'video' ? 'mp4' : 'png'}`}
+                                        onClick={(e) => e.stopPropagation()}
+                                        className="absolute top-1 left-1 p-1 bg-white/80 rounded-full opacity-0 group-hover:opacity-100 hover:text-green-500 transition-all z-10 hover:bg-white shadow-sm"
+                                        title="Download"
+                                    >
+                                        <Download size={10} />
+                                    </a>
                                 )}
 
                                 {/* Delete Button */}

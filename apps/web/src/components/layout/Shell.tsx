@@ -20,11 +20,7 @@ export function Shell({ children, showRightRail = false, showTopBar = true, clas
             </main>
 
             {/* Floating Top Bar Layer */}
-            {showTopBar && (
-                <div className="absolute top-0 left-0 right-0 z-30 pointer-events-none">
-                    <TopBar />
-                </div>
-            )}
+            {showTopBar && <TopBar />}
 
             {/* Floating Right Rail Layer */}
             {showRightRail && (
